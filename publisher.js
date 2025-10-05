@@ -22,12 +22,17 @@ redisClient.on('connect', () => {
 
 // Ubicaciones de sensores simulados
 const sensores = [
-  { id: 'sensor-1', nombre: 'Bogotá', lat: 4.6097, lon: -74.0817 },
-  { id: 'sensor-2', nombre: 'Medellín', lat: 6.2442, lon: -75.5812 },
-  { id: 'sensor-3', nombre: 'Cali', lat: 3.4516, lon: -76.5320 },
-  { id: 'sensor-4', nombre: 'Barranquilla', lat: 10.9639, lon: -74.7964 },
-  { id: 'sensor-5', nombre: 'Cartagena', lat: 10.3910, lon: -75.4794 }
-];
+    { id: 'sensor-1', nombre: 'Bogotá', lat: 4.6097, lon: -74.0817 },
+    { id: 'sensor-2', nombre: 'Medellín', lat: 6.2442, lon: -75.5812 },
+    { id: 'sensor-3', nombre: 'Cali', lat: 3.4516, lon: -76.5320 },
+    { id: 'sensor-4', nombre: 'Barranquilla', lat: 10.9639, lon: -74.7964 },
+    { id: 'sensor-5', nombre: 'Cartagena', lat: 10.3910, lon: -75.4794 },
+    { id: 'sensor-6', nombre: 'Tunja', lat: 5.5353, lon: -73.3678 },
+    { id: 'sensor-7', nombre: 'Duitama', lat: 5.8189, lon: -73.0344 },
+    { id: 'sensor-8', nombre: 'Sogamoso', lat: 5.7151, lon: -72.9343 },
+    { id: 'sensor-9', nombre: 'Yopal', lat: 5.3378, lon: -72.3956 },
+    { id: 'sensor-10', nombre: 'Aguazul', lat: 5.1726, lon: -72.5470 }
+  ];
 
 // Función para obtener datos climáticos
 async function obtenerDatosClimaticos(lat, lon) {

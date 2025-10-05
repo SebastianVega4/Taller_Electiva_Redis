@@ -14,7 +14,12 @@ const coloresSensores = {
   'Medellín': '#4ECDC4',
   'Cali': '#45B7D1',
   'Barranquilla': '#96CEB4',
-  'Cartagena': '#FFEAA7'
+  'Cartagena': '#FFEAA7',
+  'Tunja': '#A29BFE',
+  'Duitama': '#FD79A8',
+  'Sogamoso': '#55EFC4',
+  'Yopal': '#FDCB6E',
+  'Aguazul': '#74B9FF'
 };
 
 // Datos en memoria del cliente
@@ -30,7 +35,6 @@ const datosCliente = {
 
 // Bandera para verificar si los gráficos están listos
 let graficosListos = false;
-let inicializacionEnProgreso = false;
 
 // Destruir gráficos existentes
 function destruirGraficos() {
@@ -41,36 +45,37 @@ function destruirGraficos() {
     }
   });
   graficosListos = false;
+  console.log('🗑️ Gráficos destruidos');
 }
 
-// Inicializar gráficos - VERSIÓN CORREGIDA
+// Inicializar gráficos - VERSIÓN MEJORADA Y SIMPLIFICADA
 function inicializarGraficos() {
-  if (inicializacionEnProgreso) {
-    console.log('🔄 Inicialización ya en progreso...');
-    return false;
-  }
+  console.log('🔄 Iniciando inicialización de gráficos...');
   
-  inicializacionEnProgreso = true;
-  
-  try {
-    // Destruir gráficos existentes primero
-    destruirGraficos();
+  // Destruir gráficos existentes primero
+  destruirGraficos();
 
+  try {
     // Verificar que los elementos canvas existan
     const canvasIds = ['chartTemperatura', 'chartHumedad', 'chartPresion', 'chartViento'];
+    let todosLosCanvasExisten = true;
     
     for (const canvasId of canvasIds) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`❌ No se encontró el canvas: ${canvasId}`);
-        inicializacionEnProgreso = false;
-        return false;
+        todosLosCanvasExisten = false;
+        break;
       }
-      // Limpiar el contexto del canvas
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      console.log(`✅ Canvas encontrado: ${canvasId}`);
     }
 
+    if (!todosLosCanvasExisten) {
+      console.error('❌ No se pudieron encontrar todos los canvas');
+      return false;
+    }
+
+    // Configuración base simplificada
     const configBase = {
       type: 'line',
       options: {
@@ -81,13 +86,8 @@ function inicializarGraficos() {
         },
         scales: {
           x: {
-            type: 'time',
-            time: {
-              unit: 'minute',
-              displayFormats: {
-                minute: 'HH:mm'
-              }
-            },
+            type: 'linear',
+            position: 'bottom',
             title: {
               display: true,
               text: 'Tiempo'
@@ -110,91 +110,84 @@ function inicializarGraficos() {
       }
     };
 
-    // Inicializar gráficos con IDs únicos
-    charts.temperatura = new Chart(
-      document.getElementById('chartTemperatura').getContext('2d'),
-      {
-        ...configBase,
-        data: {
-          datasets: Object.keys(coloresSensores).map(sensor => ({
-            label: sensor,
-            borderColor: coloresSensores[sensor],
-            backgroundColor: coloresSensores[sensor] + '20',
-            data: [],
-            tension: 0.4,
-            pointRadius: 3,
-            pointHoverRadius: 6,
-            fill: false
-          }))
-        }
-      }
-    );
+    // Crear datasets para cada sensor
+    const datasets = Object.keys(coloresSensores).map(sensor => ({
+      label: sensor,
+      borderColor: coloresSensores[sensor],
+      backgroundColor: coloresSensores[sensor] + '20',
+      data: [],
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      fill: false
+    }));
 
-    charts.humedad = new Chart(
-      document.getElementById('chartHumedad').getContext('2d'),
-      {
-        ...configBase,
-        data: {
-          datasets: Object.keys(coloresSensores).map(sensor => ({
-            label: sensor,
-            borderColor: coloresSensores[sensor],
-            backgroundColor: coloresSensores[sensor] + '20',
-            data: [],
-            tension: 0.4,
-            pointRadius: 3,
-            pointHoverRadius: 6,
-            fill: false
-          }))
+    // Inicializar gráficos individualmente
+    try {
+      charts.temperatura = new Chart(
+        document.getElementById('chartTemperatura').getContext('2d'),
+        {
+          ...configBase,
+          data: { datasets: JSON.parse(JSON.stringify(datasets)) }
         }
-      }
-    );
+      );
+      console.log('✅ Gráfico de temperatura inicializado');
+    } catch (error) {
+      console.error('❌ Error inicializando gráfico de temperatura:', error);
+    }
 
-    charts.presion = new Chart(
-      document.getElementById('chartPresion').getContext('2d'),
-      {
-        ...configBase,
-        data: {
-          datasets: Object.keys(coloresSensores).map(sensor => ({
-            label: sensor,
-            borderColor: coloresSensores[sensor],
-            backgroundColor: coloresSensores[sensor] + '20',
-            data: [],
-            tension: 0.4,
-            pointRadius: 3,
-            pointHoverRadius: 6,
-            fill: false
-          }))
+    try {
+      charts.humedad = new Chart(
+        document.getElementById('chartHumedad').getContext('2d'),
+        {
+          ...configBase,
+          data: { datasets: JSON.parse(JSON.stringify(datasets)) }
         }
-      }
-    );
+      );
+      console.log('✅ Gráfico de humedad inicializado');
+    } catch (error) {
+      console.error('❌ Error inicializando gráfico de humedad:', error);
+    }
 
-    charts.viento = new Chart(
-      document.getElementById('chartViento').getContext('2d'),
-      {
-        ...configBase,
-        data: {
-          datasets: Object.keys(coloresSensores).map(sensor => ({
-            label: sensor,
-            borderColor: coloresSensores[sensor],
-            backgroundColor: coloresSensores[sensor] + '20',
-            data: [],
-            tension: 0.4,
-            pointRadius: 3,
-            pointHoverRadius: 6,
-            fill: false
-          }))
+    try {
+      charts.presion = new Chart(
+        document.getElementById('chartPresion').getContext('2d'),
+        {
+          ...configBase,
+          data: { datasets: JSON.parse(JSON.stringify(datasets)) }
         }
-      }
-    );
+      );
+      console.log('✅ Gráfico de presión inicializado');
+    } catch (error) {
+      console.error('❌ Error inicializando gráfico de presión:', error);
+    }
 
-    graficosListos = true;
-    inicializacionEnProgreso = false;
-    console.log('✅ Gráficos inicializados correctamente');
-    return true;
+    try {
+      charts.viento = new Chart(
+        document.getElementById('chartViento').getContext('2d'),
+        {
+          ...configBase,
+          data: { datasets: JSON.parse(JSON.stringify(datasets)) }
+        }
+      );
+      console.log('✅ Gráfico de viento inicializado');
+    } catch (error) {
+      console.error('❌ Error inicializando gráfico de viento:', error);
+    }
+
+    // Verificar que todos los gráficos se inicializaron
+    const todosInicializados = Object.values(charts).every(chart => chart !== null);
+    
+    if (todosInicializados) {
+      graficosListos = true;
+      console.log('🎉 TODOS los gráficos inicializados correctamente');
+      return true;
+    } else {
+      console.error('❌ No todos los gráficos se inicializaron');
+      return false;
+    }
   } catch (error) {
-    console.error('❌ Error inicializando gráficos:', error);
-    destruirGraficos();
-    inicializacionEnProgreso = false;
+    console.error('❌ Error crítico inicializando gráficos:', error);
     return false;
   }
 }
@@ -204,6 +197,11 @@ function actualizarMetricas(datos) {
   datosCliente.metricasActuales[datos.sensorNombre] = datos;
   
   const metricasContainer = document.getElementById('metricasActuales');
+  if (!metricasContainer) {
+    console.error('❌ No se encontró el contenedor de métricas');
+    return;
+  }
+  
   metricasContainer.innerHTML = '';
   
   Object.values(datosCliente.metricasActuales).forEach(metricas => {
@@ -242,13 +240,17 @@ function ajustarColor(color, cantidad) {
 
 // Actualizar gráficos - VERSIÓN MEJORADA
 function actualizarGraficos(datos) {
-  // Si los gráficos no están listos, no intentar actualizar
   if (!graficosListos) {
-    console.log('⏳ Gráficos no listos, esperando inicialización...');
-    return;
+    console.log('⏳ Gráficos no listos, reintentando inicialización...');
+    if (inicializarGraficos()) {
+      console.log('✅ Gráficos inicializados, procediendo con actualización');
+    } else {
+      console.error('❌ No se pudieron inicializar los gráficos');
+      return;
+    }
   }
 
-  const timestamp = new Date(datos.timestamp);
+  const timestamp = Date.now(); // Usar timestamp simple
   
   // Actualizar cada gráfico con manejo de errores
   Object.keys(charts).forEach(tipo => {
@@ -275,7 +277,7 @@ function actualizarGraficos(datos) {
           chart.data.datasets[datasetIndex].data.shift();
         }
         
-        // Actualizar gráfico suavemente
+        // Actualizar gráfico
         chart.update('none');
       }
     } catch (error) {
@@ -287,6 +289,11 @@ function actualizarGraficos(datos) {
 // Actualizar mapa de calor
 function actualizarHeatmap() {
   const heatmap = document.getElementById('heatmap');
+  if (!heatmap) {
+    console.error('❌ No se encontró el heatmap');
+    return;
+  }
+  
   heatmap.innerHTML = '';
   
   Object.values(datosCliente.metricasActuales).forEach(datos => {
@@ -311,10 +318,9 @@ function actualizarHeatmap() {
   });
 }
 
-// Eventos de Socket.IO - VERSIÓN MEJORADA
+// Eventos de Socket.IO
 socket.on('datosHistoricos', (datos) => {
   console.log('📊 Datos históricos recibidos');
-  // Aquí puedes procesar datos históricos si es necesario
 });
 
 socket.on('nuevosDatosClima', (datos) => {
@@ -334,19 +340,20 @@ socket.on('connect_error', (error) => {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🔄 Inicializando aplicación IoT...');
   
-  // Esperar a que todos los elementos estén renderizados
+  // Esperar un poco más para asegurar que todo esté renderizado
   setTimeout(() => {
+    console.log('🎯 Intentando inicializar gráficos...');
     if (inicializarGraficos()) {
       console.log('🚀 Sistema IoT de monitoreo climático inicializado');
     } else {
       console.error('❌ Error crítico: No se pudieron inicializar los gráficos');
-      // Reintentar después de 2 segundos
+      // Reintentar después de 1 segundo
       setTimeout(() => {
         console.log('🔄 Reintentando inicialización de gráficos...');
         inicializarGraficos();
-      }, 2000);
+      }, 1000);
     }
-  }, 500);
+  }, 1000);
 });
 
 // Manejar reconexiones de Socket.IO
