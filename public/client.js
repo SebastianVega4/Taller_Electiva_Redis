@@ -147,8 +147,18 @@ function actualizarMetricas(datos) {
 
 // Función auxiliar para ajustar colores
 function ajustarColor(color, cantidad) {
-  // Simplificación para el ejemplo
-  return color;
+  // Convertir color HEX a RGB
+  let r = parseInt(color.slice(1, 3), 16);
+  let g = parseInt(color.slice(3, 5), 16);
+  let b = parseInt(color.slice(5, 7), 16);
+
+  // Ajustar brillo
+  r = Math.max(0, Math.min(255, r + cantidad));
+  g = Math.max(0, Math.min(255, g + cantidad));
+  b = Math.max(0, Math.min(255, b + cantidad));
+
+  // Convertir de vuelta a HEX
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 // Actualizar gráficos

@@ -2,8 +2,16 @@
 
 Get started by customizing your environment (defined in the .idx/dev.nix file) with the tools and IDE extensions you'll need for your project!
 
-Learn more at https://developers.google.com/idx/guides/customize-idx-env
+.env
+REDIS_URL=tu_url_redis_upstash
+PORT=3000
 
 '''
-docker run --name redis-demo -p 6379:6379 redis
+npm install
+
+npm start
+
+npm run publisher
+
+http://localhost:3000
 '''

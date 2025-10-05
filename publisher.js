@@ -1,12 +1,34 @@
 import { createClient } from 'redis';
 import fetch from 'node-fetch';
 
-// Configuración de Redis (Upstash)
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+// Configuración mejorada de Redis
+const redisConfig = {
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    connectTimeout: 60000,
+    lazyConnect: true,
+    reconnectStrategy: (retries) => {
+      if (retries > 10) {
+        console.log('Demasiados intentos de reconexión. Cerrando...');
+        return new Error('Demasiados intentos de reconexión');
+      }
+      return Math.min(retries * 100, 3000);
+    }
+  }
+};
+
+const redisClient = createClient(redisConfig);
+
+// Manejo de errores
+redisClient.on('error', (err) => {
+  console.error('❌ Error Redis Publisher:', err);
 });
 
-// Ubicaciones de sensores simulados (coordenadas de ciudades)
+redisClient.on('connect', () => {
+  console.log('✅ Publisher conectado a Redis');
+});
+
+// Ubicaciones de sensores simulados
 const sensores = [
   { id: 'sensor-1', nombre: 'Bogotá', lat: 4.6097, lon: -74.0817 },
   { id: 'sensor-2', nombre: 'Medellín', lat: 6.2442, lon: -75.5812 },
@@ -15,12 +37,17 @@ const sensores = [
   { id: 'sensor-5', nombre: 'Cartagena', lat: 10.3910, lon: -75.4794 }
 ];
 
-// Función para obtener datos climáticos de Open-Meteo
+// Función para obtener datos climáticos
 async function obtenerDatosClimaticos(lat, lon) {
   try {
+    console.log(`🌤️  Obteniendo datos para lat: ${lat}, lon: ${lon}`);
     const response = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,pressure_msl,wind_speed_10m`
     );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
     const data = await response.json();
     
@@ -32,52 +59,78 @@ async function obtenerDatosClimaticos(lat, lon) {
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Error obteniendo datos climáticos:', error);
+    console.error('❌ Error obteniendo datos climáticos:', error.message);
     // Datos simulados en caso de error
     return {
-      temperatura: Math.random() * 30 + 10,
-      humedad: Math.random() * 50 + 30,
-      presion: Math.random() * 50 + 1000,
-      viento: Math.random() * 20,
+      temperatura: Math.random() * 10 + 18,
+      humedad: Math.random() * 30 + 50,
+      presion: Math.random() * 20 + 1000,
+      viento: Math.random() * 15,
       timestamp: new Date().toISOString()
     };
   }
 }
 
-// Función principal del publisher
+// Función principal
 async function iniciarPublisher() {
   try {
+    console.log("🔄 Conectando Publisher a Redis...");
     await redisClient.connect();
-    console.log('Publisher conectado a Redis');
+    console.log('✅ Publisher conectado exitosamente');
 
-    // Publicar datos cada 10 segundos
+    let ciclo = 0;
+    
+    // Publicar datos cada 15 segundos
     setInterval(async () => {
+      ciclo++;
+      console.log(`\n🔄 Ciclo ${ciclo}: Publicando datos...`);
+      
       for (const sensor of sensores) {
-        const datosClima = await obtenerDatosClimaticos(sensor.lat, sensor.lon);
-        
-        const mensaje = {
-          sensorId: sensor.id,
-          sensorNombre: sensor.nombre,
-          lat: sensor.lat,
-          lon: sensor.lon,
-          ...datosClima
-        };
+        try {
+          const datosClima = await obtenerDatosClimaticos(sensor.lat, sensor.lon);
+          
+          const mensaje = {
+            sensorId: sensor.id,
+            sensorNombre: sensor.nombre,
+            lat: sensor.lat,
+            lon: sensor.lon,
+            ...datosClima
+          };
 
-        // Publicar en Redis
-        await redisClient.publish('canal-clima', JSON.stringify(mensaje));
-        
-        // Almacenar en Redis para histórico (máximo 100 registros por sensor)
-        const clave = `clima:${sensor.id}`;
-        await redisClient.lPush(clave, JSON.stringify(mensaje));
-        await redisClient.lTrim(clave, 0, 99);
-        
-        console.log(`Datos publicados para ${sensor.nombre}:`, datosClima);
+          // Publicar en Redis
+          await redisClient.publish('canal-clima', JSON.stringify(mensaje));
+          
+          console.log(`✅ ${sensor.nombre}: ${datosClima.temperatura}°C, ${datosClima.humedad}% humedad`);
+          
+          // Pequeña pausa entre sensores
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+        } catch (error) {
+          console.error(`❌ Error procesando sensor ${sensor.nombre}:`, error.message);
+        }
       }
-    }, 10000); // Cada 10 segundos
+      
+      console.log(`✅ Ciclo ${ciclo} completado`);
+      
+    }, 15000); // Cada 15 segundos
 
   } catch (error) {
-    console.error('Error en publisher:', error);
+    console.error('❌ Error crítico en publisher:', error);
+    process.exit(1);
   }
 }
+
+// Manejo graceful de cierre
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Cerrando publisher...');
+  try {
+    await redisClient.quit();
+    console.log('✅ Publisher cerrado correctamente');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error cerrando publisher:', error);
+    process.exit(1);
+  }
+});
 
 iniciarPublisher();
