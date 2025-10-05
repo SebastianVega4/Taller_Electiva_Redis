@@ -3,8 +3,13 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { createClient } from "redis";
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
@@ -36,8 +41,13 @@ subscriber.on('connect', () => {
   console.log('✅ Subscriber conectado a Redis');
 });
 
-// Servir archivos estáticos
-app.use(express.static(".")); // Cambiado para servir desde raíz
+// Servir archivos estáticos CORREGIDO
+app.use(express.static(join(__dirname, 'public')));
+
+// Ruta principal para servir index.html
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'index.html'));
+});
 
 // Almacenamiento de datos en memoria para gráficos
 const datosClimaticos = {
