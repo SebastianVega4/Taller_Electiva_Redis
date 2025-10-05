@@ -3,19 +3,13 @@ import fetch from 'node-fetch';
 
 // Configuración mejorada de Redis
 const redisConfig = {
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  socket: {
-    connectTimeout: 60000,
-    lazyConnect: true,
-    reconnectStrategy: (retries) => {
-      if (retries > 10) {
-        console.log('Demasiados intentos de reconexión. Cerrando...');
-        return new Error('Demasiados intentos de reconexión');
-      }
-      return Math.min(retries * 100, 3000);
+    url: process.env.REDIS_URL,
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+      tls: true,
+      rejectUnauthorized: false
     }
-  }
-};
+  };
 
 const redisClient = createClient(redisConfig);
 
