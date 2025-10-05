@@ -2,23 +2,55 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Chat con Redis</title>
-  <style>
-    body { font-family: sans-serif; background: #f4f4f9; display: flex; flex-direction: column; align-items: center; }
-    #chat { width: 400px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    #mensajes { height: 300px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; }
-    .msg { padding: 6px; margin-bottom: 5px; border-radius: 8px; background: #e3f2fd; }
-    input, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-    button { background: #1976d2; color: white; border: none; cursor: pointer; }
-    button:hover { background: #1565c0; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema IoT - Monitoreo Climático</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h2>💬 Chat en tiempo real con Redis</h2>
-  <div id="chat">
-    <div id="mensajes"></div>
-    <input id="inputMsg" placeholder="Escribe un mensaje..." />
-    <button id="btnEnviar">Enviar</button>
+  <div class="container">
+    <header>
+      <h1>🌤️ Sistema IoT - Monitoreo Climático</h1>
+      <p>Datos en tiempo real de sensores distribuidos</p>
+    </header>
+
+    <div class="dashboard">
+      <!-- Tarjetas de métricas actuales -->
+      <div class="metrics-grid" id="metricasActuales">
+        <!-- Se llenará dinámicamente -->
+      </div>
+
+      <!-- Gráficos -->
+      <div class="charts-grid">
+        <div class="chart-container">
+          <h3>Temperatura vs Tiempo</h3>
+          <canvas id="chartTemperatura"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Humedad vs Tiempo</h3>
+          <canvas id="chartHumedad"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Presión vs Tiempo</h3>
+          <canvas id="chartPresion"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Velocidad del Viento vs Tiempo</h3>
+          <canvas id="chartViento"></canvas>
+        </div>
+      </div>
+
+      <!-- Mapa de calor -->
+      <div class="heatmap-container">
+        <h3>Mapa de Calor - Distribución de Temperatura</h3>
+        <div id="heatmap" class="heatmap">
+          <!-- Se generará dinámicamente -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

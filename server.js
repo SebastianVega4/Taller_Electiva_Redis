@@ -1,45 +1,105 @@
-import express from "express"; // permitir crear servidor web
-import { createServer } from "http"; // crear servidor HTTP
-import { Server } from "socket.io"; // Esta librería permite comunicación en tiempo real haciendo uso de WebSockets que es un protocolo que permite comunicación bidireccional entre cliente y servidor
-import { createClient } from "redis"; // cliente de Redis
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { createClient } from "redis";
+import dotenv from 'dotenv';
 
-const app = express(); // crear aplicación Express
-const httpServer = createServer(app); // crear servidor HTTP
-const io = new Server(httpServer); // crear servidor Socket.IO
+dotenv.config();
 
-// Servir archivos estáticos desde la carpeta "public"
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
+// Configuración de Redis (Upstash)
+const publisher = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
+const subscriber = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
 
 app.use(express.static("public"));
 
-// Conectar Redis
-const publisher = createClient(); // cliente de Redis para publicar mensajes
-const subscriber = createClient(); // cliente de Redis para suscribirse a mensajes
+// Almacenamiento de datos en memoria para gráficos
+const datosClimaticos = {
+  temperatura: [],
+  humedad: [],
+  presion: [],
+  viento: []
+};
 
-await publisher.connect(); // conectar cliente de Redis para publicar mensajes además contiene la palabra await porque es una operación asíncrona
-await subscriber.connect(); // conectar cliente de Redis para suscribirse a mensajes
-
-// Suscribirse a canal de Redis
-await subscriber.subscribe("canal_chat", (message) => { // suscribirse al canal "canal_chat" de Redis
-  io.emit("nuevoMensaje", message); // emitir mensaje a todos los clientes conectados a través de Socket.IO
-}); // cuando se recibe un mensaje en el canal "canal_chat", se emite a todos los clientes conectados a través de Socket.IO
-
-// Socket.IO recibir mensajes desde el cliente y publicar en Redis
-io.on("connection", (socket) => { // cuando un cliente se conecta
-  console.log("Un usuario conectado:", socket.id);
-
-  // Generar un color aleatorio para el usuario
-  const colores = ["#1976d2", "#388e3c", "#d32f2f", "#f57c00", "#7b1fa2", "#c2185b", "#00796b", "#512da8", "#303f9f"];
-  const color = colores[Math.floor(Math.random() * colores.length)];
-
-  // Enviar al cliente su color
-  socket.emit("asignarColor", color);
-
-  socket.on("enviarMensaje", async (msg) => { // cuando se recibe un mensaje del cliente
-    // Publicar mensaje en Redis
-    await publisher.publish("canal_chat", JSON.stringify({ msg, color })); // publicar mensaje en el canal "canal_chat" de Redis
+// Función para procesar y almacenar datos
+function procesarDatosClimaticos(mensaje) {
+  const datos = JSON.parse(mensaje);
+  
+  // Agregar a los datos históricos (mantener últimos 50 registros)
+  datosClimaticos.temperatura.push({
+    sensor: datos.sensorNombre,
+    valor: datos.temperatura,
+    timestamp: datos.timestamp
   });
-});
+  
+  datosClimaticos.humedad.push({
+    sensor: datos.sensorNombre,
+    valor: datos.humedad,
+    timestamp: datos.timestamp
+  });
+  
+  datosClimaticos.presion.push({
+    sensor: datos.sensorNombre,
+    valor: datos.presion,
+    timestamp: datos.timestamp
+  });
+  
+  datosClimaticos.viento.push({
+    sensor: datos.sensorNombre,
+    valor: datos.viento,
+    timestamp: datos.timestamp
+  });
+  
+  // Mantener solo los últimos 50 registros por tipo
+  Object.keys(datosClimaticos).forEach(key => {
+    if (datosClimaticos[key].length > 50) {
+      datosClimaticos[key] = datosClimaticos[key].slice(-50);
+    }
+  });
+  
+  return datos;
+}
 
-httpServer.listen(3000, () => {
-  console.log("Servidor en http://localhost:3000");
-}); 
+// Conectar Redis y configurar WebSockets
+async function iniciarServidor() {
+  try {
+    await publisher.connect();
+    await subscriber.connect();
+    
+    console.log("Conectado a Redis");
+
+    // Suscribirse a canal de clima
+    await subscriber.subscribe("canal-clima", (message) => {
+      const datosProcesados = procesarDatosClimaticos(message);
+      io.emit("nuevosDatosClima", datosProcesados);
+    });
+
+    // Configurar Socket.IO
+    io.on("connection", (socket) => {
+      console.log("Cliente conectado:", socket.id);
+
+      // Enviar datos históricos al conectar
+      socket.emit("datosHistoricos", datosClimaticos);
+
+      socket.on("disconnect", () => {
+        console.log("Cliente desconectado:", socket.id);
+      });
+    });
+
+    httpServer.listen(3000, () => {
+      console.log("Servidor IoT en http://localhost:3000");
+    });
+
+  } catch (error) {
+    console.error("Error iniciando servidor:", error);
+  }
+}
+
+iniciarServidor();

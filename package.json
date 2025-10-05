@@ -1,17 +1,27 @@
 {
-  "name": "electiva-1redis",
+  "name": "iot-clima-redis",
   "version": "1.0.0",
-  "description": "Get started by customizing your environment (defined in the .idx/dev.nix file) with the tools and IDE extensions you'll need for your project!",
+  "description": "Sistema IoT para monitoreo climático con Redis",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "publisher": "node publisher.js"
   },
-  "keywords": [],
+  "keywords": [
+    "iot",
+    "redis",
+    "clima",
+    "websockets"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chart.js": "^4.4.1",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "redis": "^5.8.2",
     "socket.io": "^4.8.1"
   }
