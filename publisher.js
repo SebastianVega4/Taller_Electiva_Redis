@@ -1,15 +1,13 @@
 import { createClient } from 'redis';
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
 
-// Configuración mejorada de Redis
+dotenv.config();
+
 const redisConfig = {
-    url: process.env.REDIS_URL,
-    password: process.env.REDIS_PASSWORD,
-    socket: {
-      tls: true,
-      rejectUnauthorized: false
-    }
-  };
+  url: process.env.REDIS_URL,
+  password: process.env.REDIS_PASSWORD
+};
 
 const redisClient = createClient(redisConfig);
 
@@ -34,9 +32,9 @@ const sensores = [
 // Función para obtener datos climáticos
 async function obtenerDatosClimaticos(lat, lon) {
   try {
-    console.log(`🌤️  Obteniendo datos para lat: ${lat}, lon: ${lon}`);
+    console.log(`🌤️  Obteniendo datos para ${lat}, ${lon}`);
     const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,pressure_msl,wind_speed_10m`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m`
     );
     
     if (!response.ok) {
@@ -48,7 +46,7 @@ async function obtenerDatosClimaticos(lat, lon) {
     return {
       temperatura: data.current.temperature_2m,
       humedad: data.current.relative_humidity_2m,
-      presion: data.current.pressure_msl,
+      presion: data.current.surface_pressure,
       viento: data.current.wind_speed_10m,
       timestamp: new Date().toISOString()
     };
@@ -97,7 +95,7 @@ async function iniciarPublisher() {
           console.log(`✅ ${sensor.nombre}: ${datosClima.temperatura}°C, ${datosClima.humedad}% humedad`);
           
           // Pequeña pausa entre sensores
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
           console.error(`❌ Error procesando sensor ${sensor.nombre}:`, error.message);

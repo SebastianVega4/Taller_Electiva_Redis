@@ -10,14 +10,10 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// Configuración mejorada de Redis
+// Configuración SIMPLIFICADA para Upstash
 const redisConfig = {
   url: process.env.REDIS_URL,
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    tls: true,
-    rejectUnauthorized: false
-  }
+  password: process.env.REDIS_PASSWORD
 };
 
 const publisher = createClient(redisConfig);
@@ -32,10 +28,6 @@ publisher.on('connect', () => {
   console.log('✅ Publisher conectado a Redis');
 });
 
-publisher.on('disconnect', () => {
-  console.log('❌ Publisher desconectado de Redis');
-});
-
 subscriber.on('error', (err) => {
   console.error('Error en Redis Subscriber:', err);
 });
@@ -44,11 +36,8 @@ subscriber.on('connect', () => {
   console.log('✅ Subscriber conectado a Redis');
 });
 
-subscriber.on('disconnect', () => {
-  console.log('❌ Subscriber desconectado de Redis');
-});
-
-app.use(express.static("public"));
+// Servir archivos estáticos
+app.use(express.static(".")); // Cambiado para servir desde raíz
 
 // Almacenamiento de datos en memoria para gráficos
 const datosClimaticos = {
@@ -138,9 +127,12 @@ async function iniciarServidor() {
     
     // Simular datos si Redis no está disponible
     setInterval(() => {
+      const sensores = ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena'];
+      const sensor = sensores[Math.floor(Math.random() * sensores.length)];
+      
       const datosSimulados = {
-        sensorId: 'simulado-1',
-        sensorNombre: 'Bogotá',
+        sensorId: `simulado-${sensor}`,
+        sensorNombre: sensor,
         temperatura: Math.random() * 10 + 15,
         humedad: Math.random() * 30 + 50,
         presion: Math.random() * 20 + 1000,
@@ -149,7 +141,7 @@ async function iniciarServidor() {
       };
       
       io.emit("nuevosDatosClima", datosSimulados);
-    }, 10000);
+    }, 5000);
     
   } else {
     // Suscribirse a canal de clima solo si Redis está conectado
