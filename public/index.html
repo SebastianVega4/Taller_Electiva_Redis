@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Chat con Redis</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f9; display: flex; flex-direction: column; align-items: center; }
+    #chat { width: 400px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    #mensajes { height: 300px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; }
+    .msg { padding: 6px; margin-bottom: 5px; border-radius: 8px; background: #e3f2fd; }
+    input, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #1976d2; color: white; border: none; cursor: pointer; }
+    button:hover { background: #1565c0; }
+  </style>
+</head>
+<body>
+  <h2>💬 Chat en tiempo real con Redis</h2>
+  <div id="chat">
+    <div id="mensajes"></div>
+    <input id="inputMsg" placeholder="Escribe un mensaje..." />
+    <button id="btnEnviar">Enviar</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
