@@ -28,6 +28,9 @@ const datosCliente = {
   }
 };
 
+// Bandera para verificar si los gráficos están listos
+let graficosListos = false;
+
 // Inicializar gráficos
 function inicializarGraficos() {
   const configBase = {
@@ -118,6 +121,10 @@ function inicializarGraficos() {
       }
     }
   );
+
+  // Marcar gráficos como listos
+  graficosListos = true;
+  console.log('✅ Gráficos inicializados correctamente');
 }
 
 // Actualizar métricas actuales
@@ -163,11 +170,24 @@ function ajustarColor(color, cantidad) {
 
 // Actualizar gráficos
 function actualizarGraficos(datos) {
+  // Verificar que los gráficos estén listos antes de actualizar
+  if (!graficosListos) {
+    console.warn('⚠️ Gráficos no están listos, omitiendo actualización');
+    return;
+  }
+
   const timestamp = new Date(datos.timestamp);
   
   // Actualizar cada gráfico
   Object.keys(charts).forEach(tipo => {
     const chart = charts[tipo];
+    
+    // Verificar que el gráfico exista
+    if (!chart) {
+      console.warn(`⚠️ Gráfico ${tipo} no está inicializado`);
+      return;
+    }
+    
     const datasetIndex = chart.data.datasets.findIndex(ds => ds.label === datos.sensorNombre);
     
     if (datasetIndex !== -1) {
