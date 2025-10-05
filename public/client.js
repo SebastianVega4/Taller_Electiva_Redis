@@ -30,101 +30,173 @@ const datosCliente = {
 
 // Bandera para verificar si los gráficos están listos
 let graficosListos = false;
+let inicializacionEnProgreso = false;
 
-// Inicializar gráficos
+// Destruir gráficos existentes
+function destruirGraficos() {
+  Object.keys(charts).forEach(tipo => {
+    if (charts[tipo]) {
+      charts[tipo].destroy();
+      charts[tipo] = null;
+    }
+  });
+  graficosListos = false;
+}
+
+// Inicializar gráficos - VERSIÓN CORREGIDA
 function inicializarGraficos() {
-  const configBase = {
-    type: 'line',
-    options: {
-      responsive: true,
-      animation: {
-        duration: 0
-      },
-      scales: {
-        x: {
-          type: 'time',
-          time: {
-            unit: 'minute'
+  if (inicializacionEnProgreso) {
+    console.log('🔄 Inicialización ya en progreso...');
+    return false;
+  }
+  
+  inicializacionEnProgreso = true;
+  
+  try {
+    // Destruir gráficos existentes primero
+    destruirGraficos();
+
+    // Verificar que los elementos canvas existan
+    const canvasIds = ['chartTemperatura', 'chartHumedad', 'chartPresion', 'chartViento'];
+    
+    for (const canvasId of canvasIds) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        console.error(`❌ No se encontró el canvas: ${canvasId}`);
+        inicializacionEnProgreso = false;
+        return false;
+      }
+      // Limpiar el contexto del canvas
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const configBase = {
+      type: 'line',
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 0
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'minute',
+              displayFormats: {
+                minute: 'HH:mm'
+              }
+            },
+            title: {
+              display: true,
+              text: 'Tiempo'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: 'Valor'
+            }
           }
         },
-        y: {
-          beginAtZero: false
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          }
         }
       }
-    }
-  };
+    };
 
-  // Gráfico de temperatura
-  charts.temperatura = new Chart(
-    document.getElementById('chartTemperatura'),
-    {
-      ...configBase,
-      data: {
-        datasets: Object.keys(coloresSensores).map(sensor => ({
-          label: sensor,
-          borderColor: coloresSensores[sensor],
-          backgroundColor: coloresSensores[sensor] + '20',
-          data: [],
-          tension: 0.4
-        }))
+    // Inicializar gráficos con IDs únicos
+    charts.temperatura = new Chart(
+      document.getElementById('chartTemperatura').getContext('2d'),
+      {
+        ...configBase,
+        data: {
+          datasets: Object.keys(coloresSensores).map(sensor => ({
+            label: sensor,
+            borderColor: coloresSensores[sensor],
+            backgroundColor: coloresSensores[sensor] + '20',
+            data: [],
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            fill: false
+          }))
+        }
       }
-    }
-  );
+    );
 
-  // Gráfico de humedad
-  charts.humedad = new Chart(
-    document.getElementById('chartHumedad'),
-    {
-      ...configBase,
-      data: {
-        datasets: Object.keys(coloresSensores).map(sensor => ({
-          label: sensor,
-          borderColor: coloresSensores[sensor],
-          backgroundColor: coloresSensores[sensor] + '20',
-          data: [],
-          tension: 0.4
-        }))
+    charts.humedad = new Chart(
+      document.getElementById('chartHumedad').getContext('2d'),
+      {
+        ...configBase,
+        data: {
+          datasets: Object.keys(coloresSensores).map(sensor => ({
+            label: sensor,
+            borderColor: coloresSensores[sensor],
+            backgroundColor: coloresSensores[sensor] + '20',
+            data: [],
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            fill: false
+          }))
+        }
       }
-    }
-  );
+    );
 
-  // Gráfico de presión
-  charts.presion = new Chart(
-    document.getElementById('chartPresion'),
-    {
-      ...configBase,
-      data: {
-        datasets: Object.keys(coloresSensores).map(sensor => ({
-          label: sensor,
-          borderColor: coloresSensores[sensor],
-          backgroundColor: coloresSensores[sensor] + '20',
-          data: [],
-          tension: 0.4
-        }))
+    charts.presion = new Chart(
+      document.getElementById('chartPresion').getContext('2d'),
+      {
+        ...configBase,
+        data: {
+          datasets: Object.keys(coloresSensores).map(sensor => ({
+            label: sensor,
+            borderColor: coloresSensores[sensor],
+            backgroundColor: coloresSensores[sensor] + '20',
+            data: [],
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            fill: false
+          }))
+        }
       }
-    }
-  );
+    );
 
-  // Gráfico de viento
-  charts.viento = new Chart(
-    document.getElementById('chartViento'),
-    {
-      ...configBase,
-      data: {
-        datasets: Object.keys(coloresSensores).map(sensor => ({
-          label: sensor,
-          borderColor: coloresSensores[sensor],
-          backgroundColor: coloresSensores[sensor] + '20',
-          data: [],
-          tension: 0.4
-        }))
+    charts.viento = new Chart(
+      document.getElementById('chartViento').getContext('2d'),
+      {
+        ...configBase,
+        data: {
+          datasets: Object.keys(coloresSensores).map(sensor => ({
+            label: sensor,
+            borderColor: coloresSensores[sensor],
+            backgroundColor: coloresSensores[sensor] + '20',
+            data: [],
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            fill: false
+          }))
+        }
       }
-    }
-  );
+    );
 
-  // Marcar gráficos como listos
-  graficosListos = true;
-  console.log('✅ Gráficos inicializados correctamente');
+    graficosListos = true;
+    inicializacionEnProgreso = false;
+    console.log('✅ Gráficos inicializados correctamente');
+    return true;
+  } catch (error) {
+    console.error('❌ Error inicializando gráficos:', error);
+    destruirGraficos();
+    inicializacionEnProgreso = false;
+    return false;
+  }
 }
 
 // Actualizar métricas actuales
@@ -168,41 +240,46 @@ function ajustarColor(color, cantidad) {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
-// Actualizar gráficos
+// Actualizar gráficos - VERSIÓN MEJORADA
 function actualizarGraficos(datos) {
-  // Verificar que los gráficos estén listos antes de actualizar
+  // Si los gráficos no están listos, no intentar actualizar
   if (!graficosListos) {
-    console.warn('⚠️ Gráficos no están listos, omitiendo actualización');
+    console.log('⏳ Gráficos no listos, esperando inicialización...');
     return;
   }
 
   const timestamp = new Date(datos.timestamp);
   
-  // Actualizar cada gráfico
+  // Actualizar cada gráfico con manejo de errores
   Object.keys(charts).forEach(tipo => {
-    const chart = charts[tipo];
-    
-    // Verificar que el gráfico exista
-    if (!chart) {
-      console.warn(`⚠️ Gráfico ${tipo} no está inicializado`);
-      return;
-    }
-    
-    const datasetIndex = chart.data.datasets.findIndex(ds => ds.label === datos.sensorNombre);
-    
-    if (datasetIndex !== -1) {
-      // Agregar nuevo punto
-      chart.data.datasets[datasetIndex].data.push({
-        x: timestamp,
-        y: datos[tipo === 'viento' ? 'viento' : tipo]
-      });
+    try {
+      const chart = charts[tipo];
       
-      // Mantener últimos 20 puntos
-      if (chart.data.datasets[datasetIndex].data.length > 20) {
-        chart.data.datasets[datasetIndex].data.shift();
+      if (!chart) {
+        console.warn(`⚠️ Gráfico ${tipo} no está inicializado`);
+        return;
       }
       
-      chart.update('none');
+      const datasetIndex = chart.data.datasets.findIndex(ds => ds.label === datos.sensorNombre);
+      
+      if (datasetIndex !== -1) {
+        // Agregar nuevo punto
+        const valor = datos[tipo === 'viento' ? 'viento' : tipo];
+        chart.data.datasets[datasetIndex].data.push({
+          x: timestamp,
+          y: valor
+        });
+        
+        // Mantener últimos 20 puntos
+        if (chart.data.datasets[datasetIndex].data.length > 20) {
+          chart.data.datasets[datasetIndex].data.shift();
+        }
+        
+        // Actualizar gráfico suavemente
+        chart.update('none');
+      }
+    } catch (error) {
+      console.error(`❌ Error actualizando gráfico ${tipo}:`, error);
     }
   });
 }
@@ -234,22 +311,54 @@ function actualizarHeatmap() {
   });
 }
 
-// Eventos de Socket.IO
+// Eventos de Socket.IO - VERSIÓN MEJORADA
 socket.on('datosHistoricos', (datos) => {
-  console.log('Datos históricos recibidos');
-  // Procesar datos históricos si es necesario
+  console.log('📊 Datos históricos recibidos');
+  // Aquí puedes procesar datos históricos si es necesario
 });
 
 socket.on('nuevosDatosClima', (datos) => {
-  console.log('Nuevos datos climáticos:', datos);
+  console.log('📨 Nuevos datos climáticos:', datos.sensorNombre);
   
   actualizarMetricas(datos);
   actualizarGraficos(datos);
   actualizarHeatmap();
 });
 
-// Inicializar la aplicación cuando el DOM esté listo
+// Manejar errores de conexión
+socket.on('connect_error', (error) => {
+  console.error('❌ Error de conexión:', error);
+});
+
+// Inicializar la aplicación cuando el DOM esté completamente listo
 document.addEventListener('DOMContentLoaded', () => {
-  inicializarGraficos();
-  console.log('Sistema IoT de monitoreo climático inicializado');
+  console.log('🔄 Inicializando aplicación IoT...');
+  
+  // Esperar a que todos los elementos estén renderizados
+  setTimeout(() => {
+    if (inicializarGraficos()) {
+      console.log('🚀 Sistema IoT de monitoreo climático inicializado');
+    } else {
+      console.error('❌ Error crítico: No se pudieron inicializar los gráficos');
+      // Reintentar después de 2 segundos
+      setTimeout(() => {
+        console.log('🔄 Reintentando inicialización de gráficos...');
+        inicializarGraficos();
+      }, 2000);
+    }
+  }, 500);
+});
+
+// Manejar reconexiones de Socket.IO
+socket.on('connect', () => {
+  console.log('✅ Conectado al servidor');
+});
+
+socket.on('disconnect', () => {
+  console.log('❌ Desconectado del servidor');
+});
+
+// Manejar cierre de la página
+window.addEventListener('beforeunload', () => {
+  destruirGraficos();
 });
